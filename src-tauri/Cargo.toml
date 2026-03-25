@@ -1,0 +1,38 @@
+[package]
+name = "tact-windows"
+version = "0.1.0"
+description = "Tact for Windows — Meeting Transcription"
+authors = ["jay"]
+edition = "2021"
+
+[lib]
+name = "tact_windows_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "macos-private-api"] }
+tauri-plugin-opener = "2"
+tauri-plugin-global-shortcut = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+directories = "6"
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+cpal = "0.17"
+hound = "3.5"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+reqwest = { version = "0.12", features = ["json", "multipart"] }
+keyring = { version = "3", features = [] }
+symphonia = { version = "0.5", features = ["mp3", "aac", "isomp4", "ogg", "wav", "flac"] }
+rubato = "0.16"
+voice_activity_detector = "0.2"
+pyannote-rs = "0.3"
+tauri-plugin-dialog = "2"
+window-vibrancy = "0.6"
+tauri-plugin-updater = "2"

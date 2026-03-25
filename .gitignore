@@ -1,0 +1,22 @@
+node_modules/
+target/
+dist/
+build/
+.svelte-kit/
+*.exe
+*.msi
+
+# Sensitive files
+.env
+.env.*
+*.key
+*.pem
+
+# Project docs (not for public repo)
+PLAN.md
+TODO.md
+logo.png
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+}
+
+@theme {
+  --color-sidebar: #2b2b2b;
+  --color-content: #2b2b2b;
+  --color-surface: #393939;
+  --color-surface-hover: #424242;
+  --color-accent: #4a9eff;
+  --color-accent-hover: #3d8ae0;
+  --color-accent-muted: #353535;
+  --color-text-primary: #ececec;
+  --color-text-secondary: #999999;
+  --color-text-muted: #6b6b6b;
+  --color-border: #3d3d3d;
+  --color-recording: #e74c3c;
+  --color-transcribing: #4a9eff;
+}
+
+/* Base styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: transparent;
+  color: #ececec;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle grid pattern on content background */
+.bg-content {
+  background-color: rgba(43, 43, 43, 0.86);
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Sidebar matches content — no contrast */
+.bg-sidebar {
+  background-color: rgba(43, 43, 43, 0.86);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
+
+/* Form elements dark theme */
+select, input[type="text"], input[type="password"] {
+  background: #393939;
+  border: 1px solid #4a4a4a;
+  border-radius: 8px;
+  color: #ececec;
+  padding: 6px 10px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+select:focus, input[type="text"]:focus, input[type="password"]:focus {
+  border-color: #4a9eff;
+}
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: #4a4a4a;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  border: none;
+}
+.toggle.active {
+  background: #4a9eff;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.toggle.active::after {
+  transform: translateX(18px);
+}
