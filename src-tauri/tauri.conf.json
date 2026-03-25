@@ -36,7 +36,7 @@
       "endpoints": [
         "https://github.com/jayl930/Tact-windows/releases/latest/download/latest.json"
       ],
-      "pubkey": ""
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVBRThGNEM2MUFGMTBBMEEKUldRS0N2RWF4dlRvV2p0SGdqV2NyMTZtdXZzTHlxVCtCQjBwRUdRMGhUdURyMjRkOXZLS1BOQXgK"
     }
   },
   "bundle": {
