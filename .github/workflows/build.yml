@@ -48,17 +48,27 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          cd src-tauri/target/release/bundle
-          # Create NSIS zip and sign it
-          cd nsis
-          7z a -tzip Tact_*_x64-setup.nsis.zip Tact_*_x64-setup.exe
-          npx tauri signer sign Tact_*_x64-setup.nsis.zip -k "$TAURI_SIGNING_PRIVATE_KEY" -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
-          ls -la
-          cd ../msi
-          # Create MSI zip and sign it
-          7z a -tzip Tact_*_x64_en-US.msi.zip Tact_*_x64_en-US.msi
-          npx tauri signer sign Tact_*_x64_en-US.msi.zip -k "$TAURI_SIGNING_PRIVATE_KEY" -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
-          ls -la
+          # Sign NSIS bundle
+          NSIS_DIR="src-tauri/target/release/bundle/nsis"
+          NSIS_EXE=$(ls "$NSIS_DIR"/*.exe | head -1)
+          NSIS_BASE=$(basename "$NSIS_EXE" .exe)
+          NSIS_ZIP="$NSIS_DIR/${NSIS_BASE}.nsis.zip"
+          echo "Creating $NSIS_ZIP from $NSIS_EXE"
+          (cd "$NSIS_DIR" && 7z a -tzip "$(basename "$NSIS_ZIP")" "$(basename "$NSIS_EXE")")
+          echo "Signing $NSIS_ZIP"
+          npx tauri signer sign "$NSIS_ZIP" -k "$TAURI_SIGNING_PRIVATE_KEY" -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
+          ls -la "$NSIS_DIR"
+
+          # Sign MSI bundle
+          MSI_DIR="src-tauri/target/release/bundle/msi"
+          MSI_FILE=$(ls "$MSI_DIR"/*.msi | head -1)
+          MSI_BASE=$(basename "$MSI_FILE" .msi)
+          MSI_ZIP="$MSI_DIR/${MSI_BASE}.msi.zip"
+          echo "Creating $MSI_ZIP from $MSI_FILE"
+          (cd "$MSI_DIR" && 7z a -tzip "$(basename "$MSI_ZIP")" "$(basename "$MSI_FILE")")
+          echo "Signing $MSI_ZIP"
+          npx tauri signer sign "$MSI_ZIP" -k "$TAURI_SIGNING_PRIVATE_KEY" -p "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
+          ls -la "$MSI_DIR"
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
