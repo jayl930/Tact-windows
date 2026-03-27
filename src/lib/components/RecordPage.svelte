@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
+  import { open } from "@tauri-apps/plugin-dialog";
   import { onMount, onDestroy } from "svelte";
   import Card from "./ui/Card.svelte";
   import SettingsRow from "./ui/SettingsRow.svelte";
@@ -17,6 +18,7 @@
   let apiProvider = $state("groq");
   let diarizationEnabled = $state(false);
   let enabledLanguages = $state<string[]>(["en", "ko"]);
+  let outputFolder = $state<string | null>(null);
 
   const ALL_LANGUAGES: Record<string, string> = {
     en: "English", ko: "한국어", es: "Spanish", fr: "French",
@@ -43,6 +45,7 @@
       apiProvider = s.api_provider;
       diarizationEnabled = s.diarization_enabled;
       enabledLanguages = s.enabled_languages || ["en", "ko"];
+      outputFolder = s.output_folder || null;
     } catch (e) { console.error(e); }
   }
 
@@ -77,6 +80,22 @@
         }, 200);
       } catch (e) { statusMessage = `Error: ${e}`; }
     }
+  }
+
+  function folderName(path: string | null): string {
+    if (!path) return "transcripts";
+    return path.split(/[\\/]/).pop() || path;
+  }
+
+  async function pickOutputFolder() {
+    try {
+      const result = await open({ directory: true, multiple: false });
+      if (result) {
+        const folder = result as string;
+        await invoke("set_output_folder", { folder });
+        outputFolder = folder;
+      }
+    } catch (e) { console.error(e); }
   }
 
   function providerLabel(p: string): string {
@@ -168,12 +187,16 @@
       <div class="border-t border-border"></div>
 
       <SettingsRow label="Destination">
-        <span class="inline-flex items-center gap-1.5 text-[12px] text-accent bg-accent/10 px-2.5 py-1 rounded-md">
+        <button
+          onclick={pickOutputFolder}
+          class="inline-flex items-center gap-1.5 text-[12px] text-accent bg-accent/10 px-2.5 py-1 rounded-md hover:bg-accent/20 transition-colors cursor-pointer"
+          title={outputFolder || "Default: transcripts folder"}
+        >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>
           </svg>
-          transcripts
-        </span>
+          {folderName(outputFolder)}
+        </button>
       </SettingsRow>
 
       <div class="border-t border-border"></div>

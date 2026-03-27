@@ -141,6 +141,7 @@ pub fn run() {
             commands::process_pending_queue,
             commands::retry_queue_item,
             commands::remove_queue_item,
+            commands::start_queue_item,
             commands::get_enrolled_speakers,
             commands::enroll_speaker,
             commands::remove_enrolled_speaker,

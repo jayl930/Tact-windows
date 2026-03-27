@@ -16,6 +16,7 @@
 
   let items = $state<QueueItem[]>([]);
   let isProcessing = $state(false);
+  let statusMessage = $state("");
 
   async function loadQueue() {
     try { items = await invoke("get_queue"); } catch (e) { console.error(e); }
@@ -25,6 +26,10 @@
     isProcessing = true;
     try { await invoke("process_pending_queue"); } catch (e) { console.error(e); }
     isProcessing = false;
+  }
+
+  async function startItem(id: string) {
+    try { await invoke("start_queue_item", { id }); } catch (e) { console.error(e); }
   }
 
   async function retryItem(id: string) {
@@ -45,8 +50,12 @@
 
   onMount(() => {
     loadQueue();
-    const unlisten = listen("queue-updated", () => loadQueue());
-    return () => { unlisten.then((f) => f()); };
+    const unlistens = [
+      listen("queue-updated", () => loadQueue()),
+      listen<string>("transcription-error", (e) => { statusMessage = `Error: ${e.payload}`; }),
+      listen("transcription-complete", () => { statusMessage = ""; }),
+    ];
+    return () => { unlistens.forEach((u) => u.then((f) => f())); };
   });
 </script>
 
@@ -63,6 +72,12 @@
       </button>
     {/if}
   </div>
+
+  {#if statusMessage}
+    <div class="px-4 pb-2">
+      <p class="text-[12px] text-recording bg-recording/10 px-3 py-2 rounded-lg">{statusMessage}</p>
+    </div>
+  {/if}
 
   <div class="flex-1 overflow-auto px-4 pb-4">
     {#if items.length === 0}
@@ -100,6 +115,12 @@
                 {/if}
               </div>
               <div class="flex gap-1 flex-shrink-0">
+                {#if item.status === "Pending"}
+                  <button onclick={() => startItem(item.id)}
+                    class="px-2 py-1 text-[11px] text-accent hover:text-accent-hover transition-colors">
+                    Start
+                  </button>
+                {/if}
                 {#if item.status === "Failed"}
                   <button onclick={() => retryItem(item.id)}
                     class="px-2 py-1 text-[11px] text-accent hover:text-accent-hover transition-colors">

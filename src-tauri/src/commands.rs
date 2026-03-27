@@ -149,6 +149,17 @@ pub async fn retry_queue_item(
 }
 
 #[tauri::command]
+pub async fn start_queue_item(
+    id: String,
+    app_state: State<'_, AppState>,
+    queue_state: State<'_, QueueState>,
+    app: tauri::AppHandle,
+) -> Result<serde_json::Value, String> {
+    let current_settings = settings::load_settings();
+    process_queue_item(&id, &current_settings, &app_state, &queue_state, &app).await
+}
+
+#[tauri::command]
 pub fn remove_queue_item(
     id: String,
     queue_state: State<'_, QueueState>,
@@ -170,10 +181,13 @@ async fn process_queue_item(
 ) -> Result<serde_json::Value, String> {
     let api_key = get_stored_api_key(&settings.api_provider)?;
     if api_key.is_empty() {
-        let _ = app.emit(
-            "transcription-error",
-            "No API key configured. Go to Settings > API to add your key.",
-        );
+        let error_msg = "No API key configured. Go to Settings > API to add your key.";
+        {
+            let mut q = queue_state.0.lock().map_err(|e| e.to_string())?;
+            q.mark_failed(item_id, error_msg.to_string());
+        }
+        let _ = app.emit("queue-updated", ());
+        let _ = app.emit("transcription-error", error_msg);
         return Ok(serde_json::json!({
             "transcribed": false,
             "reason": "no_api_key"
