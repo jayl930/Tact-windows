@@ -1,6 +1,6 @@
 [package]
 name = "tact-windows"
-version = "0.1.3"
+version = "0.1.4"
 description = "Tact for Windows — Meeting Transcription"
 authors = ["jay"]
 edition = "2021"
