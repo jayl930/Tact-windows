@@ -277,13 +277,14 @@ async fn process_queue_item(
 
 #[tauri::command]
 pub fn save_api_key(provider: String, key: String) -> Result<(), String> {
-    let service = format!("tact-{}", provider.to_lowercase());
-    let entry = keyring::Entry::new(&service, "api_key")
-        .map_err(|e| format!("Keyring error: {}", e))?;
-    entry
-        .set_password(&key)
-        .map_err(|e| format!("Failed to save API key: {}", e))?;
-    Ok(())
+    let mut s = settings::load_settings();
+    let provider_key = provider.to_lowercase();
+    if key.is_empty() {
+        s.api_keys.remove(&provider_key);
+    } else {
+        s.api_keys.insert(provider_key, key);
+    }
+    settings::save_settings_to_disk(&s)
 }
 
 #[tauri::command]
@@ -292,14 +293,28 @@ pub fn get_api_key(provider: String) -> Result<String, String> {
 }
 
 fn get_stored_api_key(provider: &str) -> Result<String, String> {
-    let service = format!("tact-{}", provider.to_lowercase());
-    let entry = keyring::Entry::new(&service, "api_key")
-        .map_err(|e| format!("Keyring error: {}", e))?;
-    match entry.get_password() {
-        Ok(key) => Ok(key),
-        Err(keyring::Error::NoEntry) => Ok(String::new()),
-        Err(e) => Err(format!("Failed to get API key: {}", e)),
+    let s = settings::load_settings();
+    let provider_key = provider.to_lowercase();
+    if let Some(key) = s.api_keys.get(&provider_key) {
+        if !key.is_empty() {
+            return Ok(key.clone());
+        }
     }
+    // Migration: try reading from keyring (old storage) one time
+    let service = format!("tact-{}", provider_key);
+    if let Ok(entry) = keyring::Entry::new(&service, "api_key") {
+        if let Ok(key) = entry.get_password() {
+            if !key.is_empty() {
+                // Migrate to settings
+                let mut s = settings::load_settings();
+                s.api_keys.insert(provider_key, key.clone());
+                let _ = settings::save_settings_to_disk(&s);
+                let _ = entry.delete_credential();
+                return Ok(key);
+            }
+        }
+    }
+    Ok(String::new())
 }
 
 #[tauri::command]

@@ -89,8 +89,16 @@
     } catch (e) { console.error(e); }
   }
 
+  let keySaveStatus = $state("");
+
   async function saveApiKey() {
-    try { await invoke("save_api_key", { provider: apiProvider, key: apiKey }); } catch (e) { console.error(e); }
+    try {
+      await invoke("save_api_key", { provider: apiProvider, key: apiKey });
+      if (apiKey) { keySaveStatus = "Saved"; setTimeout(() => { keySaveStatus = ""; }, 2000); }
+    } catch (e) {
+      keySaveStatus = `Failed to save: ${e}`;
+      setTimeout(() => { keySaveStatus = ""; }, 5000);
+    }
   }
 
   async function testConnection() {
@@ -332,6 +340,9 @@
               {showApiKey ? "Hide" : "Show"}
             </button>
           </div>
+          {#if keySaveStatus}
+            <p class="text-[11px] {keySaveStatus === 'Saved' ? 'text-green-400' : 'text-recording'}">{keySaveStatus}</p>
+          {/if}
         </div>
 
         <button onclick={testConnection} disabled={isTesting}

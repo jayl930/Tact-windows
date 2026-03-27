@@ -1,5 +1,6 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -23,6 +24,9 @@ pub struct TactSettings {
     pub hooks: Vec<HookConfig>,
     // Language picker customization
     pub enabled_languages: Vec<String>,
+    // API keys stored per provider
+    #[serde(default)]
+    pub api_keys: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,6 +56,7 @@ impl Default for TactSettings {
             ai_summary_destination: "same".to_string(),
             hooks: vec![],
             enabled_languages: vec!["en".to_string(), "ko".to_string()],
+            api_keys: HashMap::new(),
         }
     }
 }
