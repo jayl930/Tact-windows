@@ -96,6 +96,7 @@
   async function testConnection() {
     if (!apiKey) { testStatus = "Enter an API key first"; return; }
     isTesting = true; testStatus = "Testing...";
+    await saveApiKey();
     try { testStatus = await invoke("test_api_connection", { provider: apiProvider, key: apiKey }); }
     catch (e) { testStatus = `${e}`; }
     isTesting = false;
@@ -322,6 +323,7 @@
               type={showApiKey ? "text" : "password"}
               bind:value={apiKey}
               onblur={saveApiKey}
+              onchange={saveApiKey}
               placeholder="sk-..."
               class="flex-1 text-[12px]"
             />
