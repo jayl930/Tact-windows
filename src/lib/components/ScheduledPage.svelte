@@ -1,7 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
-  import { openPath } from "@tauri-apps/plugin-opener";
+  import { revealItemInDir } from "@tauri-apps/plugin-opener";
   import { onMount } from "svelte";
 
   interface QueueItem {
@@ -44,9 +44,19 @@
 
   async function openOutputFolder() {
     try {
-      const folder = outputFolder || await invoke<string | null>("pick_folder");
-      if (folder) await openPath(folder);
+      // Find a completed item's transcript to reveal, or fall back to folder path
+      const completed = items.find(i => i.status === "Completed" && i.transcript_path);
+      if (completed?.transcript_path) {
+        await revealItemInDir(completed.transcript_path);
+      } else {
+        const folder = outputFolder || await invoke<string | null>("pick_folder");
+        if (folder) await revealItemInDir(folder);
+      }
     } catch (e) { console.error(e); }
+  }
+
+  async function openTranscript(path: string) {
+    try { await revealItemInDir(path); } catch (e) { console.error(e); }
   }
 
   function formatDate(dateStr: string): string {
@@ -117,7 +127,15 @@
             {item.status === 'Processing' ? 'border-l-2 border-l-accent' : ''}">
             <div class="flex items-start justify-between gap-2">
               <div class="flex-1 min-w-0">
-                <p class="text-[13px] text-text-primary truncate">{fileName(item.audio_path)}</p>
+                {#if item.status === "Completed" && item.transcript_path}
+                  <button onclick={() => openTranscript(item.transcript_path!)}
+                    class="text-[13px] text-accent hover:text-accent-hover truncate text-left transition-colors"
+                    title="Open transcript location">
+                    {fileName(item.audio_path)}
+                  </button>
+                {:else}
+                  <p class="text-[13px] text-text-primary truncate">{fileName(item.audio_path)}</p>
+                {/if}
                 <div class="flex items-center gap-2 mt-1">
                   <span class="text-[11px] px-1.5 py-0.5 rounded-md
                     {item.status === 'Completed' ? 'bg-green-500/15 text-green-400' :
