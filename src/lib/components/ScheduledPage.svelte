@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
+  import { openPath } from "@tauri-apps/plugin-opener";
   import { onMount } from "svelte";
 
   interface QueueItem {
@@ -17,6 +18,7 @@
   let items = $state<QueueItem[]>([]);
   let isProcessing = $state(false);
   let statusMessage = $state("");
+  let outputFolder = $state<string | null>(null);
 
   async function loadQueue() {
     try { items = await invoke("get_queue"); } catch (e) { console.error(e); }
@@ -40,6 +42,13 @@
     try { await invoke("remove_queue_item", { id }); } catch (e) { console.error(e); }
   }
 
+  async function openOutputFolder() {
+    try {
+      const folder = outputFolder || await invoke<string | null>("pick_folder");
+      if (folder) await openPath(folder);
+    } catch (e) { console.error(e); }
+  }
+
   function formatDate(dateStr: string): string {
     try { return new Date(dateStr).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); } catch { return dateStr; }
   }
@@ -50,6 +59,7 @@
 
   onMount(() => {
     loadQueue();
+    invoke("get_settings").then((s: any) => { outputFolder = s.output_folder || null; }).catch(() => {});
     const unlistens = [
       listen("queue-updated", () => loadQueue()),
       listen<string>("transcription-error", (e) => { statusMessage = `Error: ${e.payload}`; }),
@@ -61,7 +71,18 @@
 
 <div class="flex-1 flex flex-col h-full bg-content overflow-auto">
   <div class="flex items-center justify-between px-5 pt-4 pb-3">
-    <h1 class="text-lg font-semibold text-text-primary">Scheduled</h1>
+    <div class="flex items-center gap-2">
+      <h1 class="text-lg font-semibold text-text-primary">Scheduled</h1>
+      <button
+        onclick={openOutputFolder}
+        class="p-1 text-text-muted hover:text-accent transition-colors"
+        title="Open recordings folder"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>
+        </svg>
+      </button>
+    </div>
     {#if items.some((i) => i.status === "Pending")}
       <button
         onclick={transcribeAll}

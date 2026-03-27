@@ -40,6 +40,7 @@
 
   // Updates
   let updateStatus = $state<"idle" | "checking" | "available" | "latest">("idle");
+  let updateError = $state("");
 
   async function checkForUpdates() {
     updateStatus = "checking";
@@ -54,7 +55,9 @@
       }
     } catch (e) {
       console.error("Update check failed:", e);
+      updateError = String(e);
       updateStatus = "idle";
+      setTimeout(() => { updateError = ""; }, 8000);
     }
   }
 
@@ -226,6 +229,9 @@
 
         {#if updateStatus === "latest"}
           <p class="text-[11px] text-text-muted pb-1">You're on the latest version.</p>
+        {/if}
+        {#if updateError}
+          <p class="text-[11px] text-recording pb-1">{updateError}</p>
         {/if}
 
         <div class="border-t border-border"></div>
