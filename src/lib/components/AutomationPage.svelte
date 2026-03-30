@@ -6,7 +6,10 @@
 
   let summaryEnabled = $state(false);
   let summaryDestination = $state("same");
+  let summaryProvider = $state("claude_cli");
+  let summaryPrompt = $state("Summarize this meeting transcript concisely. Include key decisions, action items, and main topics discussed.");
   let claudeAvailable = $state(false);
+  let providerKeySet = $state(false);
   let hooks = $state<HookConfig[]>([]);
   let newHookName = $state("");
   let newHookPath = $state("");
@@ -16,7 +19,14 @@
       const s: any = await invoke("get_settings");
       summaryEnabled = s.ai_summary_enabled;
       summaryDestination = s.ai_summary_destination;
+      summaryProvider = s.ai_summary_provider || "claude_cli";
+      summaryPrompt = s.ai_summary_prompt || "Summarize this meeting transcript concisely. Include key decisions, action items, and main topics discussed.";
       hooks = s.hooks || [];
+      // Check if the selected API provider has a key configured
+      if (summaryProvider !== "claude_cli") {
+        const key = s.api_keys?.[summaryProvider] || "";
+        providerKeySet = key.length > 0;
+      }
     } catch (e) { console.error(e); }
     try { claudeAvailable = await invoke("check_claude_cli"); } catch { claudeAvailable = false; }
   }
@@ -25,9 +35,28 @@
     try {
       const s: any = await invoke("get_settings");
       await invoke("save_settings", {
-        newSettings: { ...s, ai_summary_enabled: summaryEnabled, ai_summary_destination: summaryDestination, hooks },
+        newSettings: {
+          ...s,
+          ai_summary_enabled: summaryEnabled,
+          ai_summary_destination: summaryDestination,
+          ai_summary_provider: summaryProvider,
+          ai_summary_prompt: summaryPrompt,
+          hooks,
+        },
       });
     } catch (e) { console.error(e); }
+  }
+
+  async function onProviderChange() {
+    // Re-check if the new provider has an API key
+    if (summaryProvider !== "claude_cli") {
+      try {
+        const s: any = await invoke("get_settings");
+        const key = s.api_keys?.[summaryProvider] || "";
+        providerKeySet = key.length > 0;
+      } catch { providerKeySet = false; }
+    }
+    saveSettings();
   }
 
   function addHook() {
@@ -65,24 +94,48 @@
       </div>
 
       <p class="text-[12px] text-text-secondary mt-2.5 leading-relaxed">
-        Generates a meeting summary with key decisions and action items after each transcription using Claude. Written as a separate .md file alongside the transcript.
+        Generates a meeting summary with key decisions and action items after each transcription. Written as a separate .md file alongside the transcript.
       </p>
 
       {#if summaryEnabled}
-        <div class="mt-3 pt-3 border-t border-border">
+        <div class="mt-3 pt-3 border-t border-border space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[13px] text-text-primary">Provider</span>
+            <select bind:value={summaryProvider} onchange={onProviderChange} class="w-[180px] text-[12px]">
+              <option value="claude_cli">Claude CLI</option>
+              <option value="openai">OpenAI (gpt-4o-mini)</option>
+              <option value="groq">Groq (llama-3.3-70b)</option>
+            </select>
+          </div>
+
           <div class="flex items-center justify-between">
             <span class="text-[13px] text-text-primary">Summary Folder</span>
-            <select bind:value={summaryDestination} onchange={saveSettings} class="w-[160px] text-[12px]">
+            <select bind:value={summaryDestination} onchange={saveSettings} class="w-[180px] text-[12px]">
               <option value="same">Same as transcript</option>
               <option value="subfolder">Subfolder (summaries/)</option>
               <option value="fixed">Output folder</option>
             </select>
           </div>
+
+          <div>
+            <span class="text-[13px] text-text-primary">Prompt</span>
+            <textarea
+              bind:value={summaryPrompt}
+              onblur={saveSettings}
+              rows="3"
+              class="w-full text-[12px] mt-1 bg-content border border-border rounded-lg px-3 py-2 text-text-primary resize-none focus:outline-none focus:border-accent"
+              placeholder="Enter your summary prompt..."
+            ></textarea>
+          </div>
         </div>
       {/if}
 
       <p class="text-[11px] text-text-muted mt-2.5">
-        {claudeAvailable ? "Claude Code CLI detected." : "Requires Claude Code CLI installed."}
+        {#if summaryProvider === "claude_cli"}
+          {claudeAvailable ? "Claude CLI detected." : "Requires Claude CLI — install from claude.ai/download"}
+        {:else}
+          {providerKeySet ? "API key configured." : "No API key — add one in Settings > API."}
+        {/if}
       </p>
     </Card>
 

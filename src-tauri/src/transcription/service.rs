@@ -125,23 +125,8 @@ pub async fn transcribe_file(
 
     tracing::info!("Transcript written to {}", transcript_path.display());
 
-    // Post-processing: AI summary + hooks
+    // Post-processing: hooks (summary is handled in commands.rs with UI events)
     let settings = crate::settings::load_settings();
-
-    if settings.ai_summary_enabled {
-        match crate::automation::summary::generate_summary(
-            &transcript_path,
-            &settings.ai_summary_destination,
-            settings.output_folder.as_ref().map(|s| std::path::Path::new(s.as_str())),
-        ) {
-            Ok(summary_path) => {
-                tracing::info!("AI summary written to {}", summary_path.display());
-            }
-            Err(e) => {
-                tracing::warn!("AI summary failed: {}", e);
-            }
-        }
-    }
 
     if !settings.hooks.is_empty() {
         let hook_results = crate::automation::hooks::run_hooks(

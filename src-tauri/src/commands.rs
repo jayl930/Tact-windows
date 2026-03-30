@@ -249,6 +249,44 @@ async fn process_queue_item(
             let _ = app.emit("queue-updated", ());
             let _ = app.emit("transcription-complete", &tr);
 
+            // Post-processing: AI summary with UI feedback
+            if settings.ai_summary_enabled {
+                let _ = app.emit("summary-started", ());
+                let summary_api_key = if settings.ai_summary_provider != "claude_cli" {
+                    settings.api_keys.get(&settings.ai_summary_provider)
+                        .cloned()
+                        .unwrap_or_default()
+                } else {
+                    String::new()
+                };
+                let output_folder = settings
+                    .output_folder
+                    .as_ref()
+                    .map(|s| std::path::Path::new(s.as_str()));
+
+                match crate::automation::summary::generate_summary(
+                    &tr.transcript_path,
+                    &settings.ai_summary_destination,
+                    output_folder,
+                    &settings.ai_summary_provider,
+                    &summary_api_key,
+                    &settings.ai_summary_prompt,
+                )
+                .await
+                {
+                    Ok(path) => {
+                        let _ = app.emit(
+                            "summary-complete",
+                            path.to_string_lossy().to_string(),
+                        );
+                    }
+                    Err(e) => {
+                        tracing::warn!("AI summary failed: {}", e);
+                        let _ = app.emit("summary-failed", &e);
+                    }
+                }
+            }
+
             Ok(serde_json::json!({
                 "transcribed": true,
                 "transcript_path": tr.transcript_path.to_string_lossy(),

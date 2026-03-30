@@ -15,6 +15,8 @@ export interface TactSettings {
   recent_folders: string[];
   ai_summary_enabled: boolean;
   ai_summary_destination: string;
+  ai_summary_provider: string;
+  ai_summary_prompt: string;
   hooks: HookConfig[];
   enabled_languages: string[];
 }
@@ -41,6 +43,8 @@ const defaultSettings: TactSettings = {
   recent_folders: [],
   ai_summary_enabled: false,
   ai_summary_destination: "same",
+  ai_summary_provider: "claude_cli",
+  ai_summary_prompt: "Summarize this meeting transcript concisely. Include key decisions, action items, and main topics discussed.",
   hooks: [],
   enabled_languages: ["en", "ko"],
 };

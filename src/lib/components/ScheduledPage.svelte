@@ -18,6 +18,7 @@
   let items = $state<QueueItem[]>([]);
   let isProcessing = $state(false);
   let statusMessage = $state("");
+  let summaryMessage = $state("");
   let outputFolder = $state<string | null>(null);
 
   async function loadQueue() {
@@ -74,6 +75,15 @@
       listen("queue-updated", () => loadQueue()),
       listen<string>("transcription-error", (e) => { statusMessage = `Error: ${e.payload}`; }),
       listen("transcription-complete", () => { statusMessage = ""; }),
+      listen("summary-started", () => { summaryMessage = "Generating summary..."; }),
+      listen<string>("summary-complete", () => {
+        summaryMessage = "Summary saved.";
+        setTimeout(() => { summaryMessage = ""; }, 5000);
+      }),
+      listen<string>("summary-failed", (e) => {
+        summaryMessage = `Summary failed: ${e.payload}`;
+        setTimeout(() => { summaryMessage = ""; }, 8000);
+      }),
     ];
     return () => { unlistens.forEach((u) => u.then((f) => f())); };
   });
@@ -107,6 +117,12 @@
   {#if statusMessage}
     <div class="px-4 pb-2">
       <p class="text-[12px] text-recording bg-recording/10 px-3 py-2 rounded-lg">{statusMessage}</p>
+    </div>
+  {/if}
+
+  {#if summaryMessage}
+    <div class="px-4 pb-2">
+      <p class="text-[12px] {summaryMessage.startsWith('Summary failed') ? 'text-recording bg-recording/10' : 'text-accent bg-accent/10'} px-3 py-2 rounded-lg">{summaryMessage}</p>
     </div>
   {/if}
 

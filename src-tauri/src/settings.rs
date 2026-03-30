@@ -21,6 +21,10 @@ pub struct TactSettings {
     // Automation
     pub ai_summary_enabled: bool,
     pub ai_summary_destination: String,
+    #[serde(default = "default_summary_provider")]
+    pub ai_summary_provider: String,
+    #[serde(default = "default_summary_prompt")]
+    pub ai_summary_prompt: String,
     pub hooks: Vec<HookConfig>,
     // Language picker customization
     pub enabled_languages: Vec<String>,
@@ -54,11 +58,21 @@ impl Default for TactSettings {
             recent_folders: vec![],
             ai_summary_enabled: false,
             ai_summary_destination: "same".to_string(),
+            ai_summary_provider: default_summary_provider(),
+            ai_summary_prompt: default_summary_prompt(),
             hooks: vec![],
             enabled_languages: vec!["en".to_string(), "ko".to_string()],
             api_keys: HashMap::new(),
         }
     }
+}
+
+fn default_summary_provider() -> String {
+    "claude_cli".to_string()
+}
+
+fn default_summary_prompt() -> String {
+    "Summarize this meeting transcript concisely. Include key decisions, action items, and main topics discussed.".to_string()
 }
 
 pub fn settings_dir() -> PathBuf {
